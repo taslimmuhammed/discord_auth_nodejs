@@ -4,75 +4,48 @@ const btoa = require('btoa');
 const { catchAsync } = require('../utils');
 const router = express.Router();
 const DiscordOauth2 = require("discord-oauth2");
+const  axios  = require('axios');
 
 const redirect = encodeURIComponent('http://localhost:50451/api/discord/callback');
 
 router.get('/login', async (req, res) => {
    const CLIENT_ID = process.env.CLIENT_ID;
-   res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${CLIENT_ID}&scope=identify&response_type=code&redirect_uri=${redirect}`);
-
-// const CLIENT_ID = process.env.CLIENT_ID;
-// const CLIENT_SECRET = process.env.CLIENT_SECRET;
-
-// try{
-//         const oauth = new DiscordOauth2({});
-//  oauth.tokenRequest({
-// 	// clientId, clientSecret and redirectUri are omitted, as they were already set on the class constructor
-// 	clientId: CLIENT_ID,
-// 	clientSecret: CLIENT_SECRET,
-// 	scope: "identify guilds",
-// 	grantType: "authorization_code",
-// 	redirectUri: "http://localhost/callback",
-// }).then(e=>{
-//     console.log(e)
-// }).catch(e=>{
-//     console.log(e)
-// })
-// }catch(e){
-//        console.log(e)
-// }
-
+   console.log(CLIENT_ID)
+   res.redirect(`https://discordapp.com/api/oauth2/authorize?client_id=${CLIENT_ID}&scope=identify%20email%20guilds&response_type=code&redirect_uri=${redirect}`);
 
  });
 router.get('/callback', catchAsync(async (req, res) => {
 
-    // const creds = btoa(`${CLIENT_ID}:${CLIENT_SECRET}`);
-    // const response = await fetch(`https://discordapp.com/api/oauth2/token?grant_type=authorization_code&code=${code}&redirect_uri=${redirect}`,
-    //   {
-    //     method: 'POST',
-    //     headers: {
-    //       Authorization: `Basic ${creds}`,
-    //     },
-    //   });
-    // const json = await response.json();
-    // console.log("hello",json, response)
-    // res.redirect(`/?token=${json}`);
-    if (!req.query.code) throw new Error('NoCodeProvided');
-    const code = req.query.code;
-    console.log("code",code)
-     const CLIENT_ID = process.env.CLIENT_ID;
-     const CLIENT_SECRET = process.env.CLIENT_SECRET;
+
 try{
-        const oauth = new DiscordOauth2();
-        console.log({clientId: CLIENT_ID,
-            clientSecret: CLIENT_SECRET,
-            code: code,
-            grantType: "authorization_code",
-            redirectUri: "http://localhost:50451",
-        })
- oauth.tokenRequest({
-	clientId: CLIENT_ID,
-	clientSecret: CLIENT_SECRET,
-	code: code,
-	grantType: "authorization_code",
-    // redirectUri: "http://localhost:50451",
-}).then(e=>{
-    console.log(e)
-}).catch(e=>{
-    console.log(e)
-})
+
+    const code = req.query.code
+    console.log("code",code)
+    // const params = new URLSearchParams({
+    //     client_id: process.env.CLIENT_ID,
+    //     client_secret: process.env.CLIENT_SECRET,
+    //     code: code,
+    //     grant_type: 'authorization_code',
+    //     redirect_uri: redirect
+    // });
+    const params = `client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=${redirect}`
+  try{
+    const token = await axios.post(`https://discordapp.com/api/oauth2/token`, params,
+       { headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }})
+    console.log("token", token.data)
+    console.log(code)
+    res.redirect("http://localhost:50451")
+    
+  }catch(e){
+  //  console.log(e)
+       console.log("HERE IS THE ERROR MESSAGE",e.message)
+  }
+
 }catch(e){
        console.log(e)
+       console.log("HERE IS THE ERROR MESSAGE",e.message)
 }
 
   }));
