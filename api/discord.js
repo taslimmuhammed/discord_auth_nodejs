@@ -30,18 +30,26 @@ try{
     // });
     const params = `client_id=${process.env.CLIENT_ID}&client_secret=${process.env.CLIENT_SECRET}&code=${code}&grant_type=authorization_code&redirect_uri=${redirect}`
   try{
-    const token = await axios.post(`https://discordapp.com/api/oauth2/token`, params,
+    const tokenResponse = await axios.post(`https://discordapp.com/api/oauth2/token`, params,
        { headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
         }})
-    console.log("token", token.data)
+    console.log("token", tokenResponse.data)
     console.log(code)
-    res.redirect("http://localhost:50451")
     
+    
+    // You might want to store this in an environment variable or something
+const token = tokenResponse.data.access_token
+  console.log(fetchUser(token))
+
   }catch(e){
   //  console.log(e)
-       console.log("HERE IS THE ERROR MESSAGE",e.message)
+       console.log("THE ERROR",e.message)
   }
+  res.redirect("http://localhost:50451")
+
+
+   
 
 }catch(e){
        console.log(e)
@@ -49,5 +57,25 @@ try{
 }
 
   }));
+
+  const fetchUser = async (token) => {
+    const user = await axios.get('https://discord.com/api/users/@me', {
+        headers: {
+            Authorization: `Bearer ${token}`
+        }
+    })
+    console.log(user.data)
+    const id = user.data.id
+    const response = await fetch(`https://discord.com/api/users/${id}`, {
+      headers: {
+        Authorization: `Bot ${token}`
+      }
+    })
+    console.log(response)
+    
+   
+    // if (!response.ok) throw new Error(`Error status code: ${response.status}`)
+    // return JSON.parse(await response.json())
+  }
 
 module.exports = router;
